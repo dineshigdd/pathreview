@@ -45,3 +45,98 @@ Therefore, with the above-mentioned reasoning, I decided to choose `issue #148` 
 **Setup confirmation:** [x] App runs locally at localhost:5173
 
 **Cohort ledger:** [x] Issue added to cohort ledger
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** [link to commit documenting the reproduced issue]
+
+**Reproduction summary:**
+[1–2 sentences: How did you reproduce the issue? What did you observe?]
+Before reprodicing bugs, I analyzed the code in `skill_extractor.py` that detects JavaScript/TypeScript.
+
+```python
+ if ".js" in str(filename or "").lower():
+            js_evidence.append("JavaScript file extension (.js)")
+        if ".ts" in str(filename or "").lower():
+            js_evidence.append("TypeScript file extension (.ts)")
+        if re.search(r"\b(import|require)\s+", text):
+            js_evidence.append("CommonJS or ES6 imports")
+        if "package.json" in text_lower:
+            js_evidence.append("package.json found")
+```
+In the above code that `if re.search(r"\b(import|require)\s+", text):` the only code-level check that can trigger JavaScript detection. Therefore, any pattern that is not deteceted by the regex `"\b(import|require)\s+` will not be counted as JavaScript. The following section shows 4 cases with some edge cases in which JavaScript is not detected.
+
+
+**Bug Reproduction Script:**
+```python
+from ingestion.parsers.skill_extractor import SkillExtractor
+
+# Comprehensive Bug Reproduction Suite for JavaScript/TypeScript Detection
+# This suite covers both standard JavaScript patterns and edge cases where 
+# the current heuristics (file extensions, package.json, import/require regex) fail.
+
+test_cases = [
+    {
+        "name": "Standard ES6 Modern Syntax (No extension, no import/require)",
+        "code": """
+        const calculateTotal = (items) => {
+            let subtotal = 0;
+            var taxRate = 0.05;
+            return subtotal * taxRate;
+        };
+        """
+    },
+    {
+        "name": "Traditional Function Declaration with Console Logging",
+        "code": """
+        function displayWelcomeMessage(username) {
+            console.log("Welcome back, " + username);
+        }
+        """
+    },
+    {
+        "name": "ES6 Class Definition without Module Imports",
+        "code": """
+        class ShoppingCart {
+            constructor() {
+                this.items = [];
+            }
+            addItem(item) {
+                this.items.push(item);
+            }
+        }
+        """
+    },
+    {
+        "name": "Asynchronous Function Using Promise/Fetch Patterns",
+        "code": """
+        async function fetchData(url) {
+            let response = await fetch(url);
+            let data = await response.json();
+            return data;
+        }
+        """
+    }
+]
+
+e = SkillExtractor()
+
+print("=== Running Skill Extractor Bug Reproduction Suite ===\n")
+for index, test in enumerate(test_cases, start=1):
+    detected_skills = e.extract_skills(test["code"])
+    skill_names = [d.name for d in detected_skills]
+    
+    print(f"Test Case {index}: {test['name']}")
+    print("Code Snippet:")
+    print(test["code"].strip())
+    print(f"Detected Skills: {skill_names}")
+    print("-" * 50)
+
+```
+
+**PLAN.md link:** [link to PLAN.md in your fork]
+
+**Walkthrough video (recommended):** [link to your Loom video, ≤2 min — recommended, not graded]
+
+**Blockers or open questions:**
+[Anything you're still uncertain about going into Week 9, or leave blank]

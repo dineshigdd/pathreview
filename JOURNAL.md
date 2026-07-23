@@ -48,10 +48,9 @@ Therefore, with the above-mentioned reasoning, I decided to choose `issue #148` 
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** [link to commit documenting the reproduced issue]
+**Reproduction commit link:** https://github.com/dineshigdd/pathreview/commit/d1bb46fb9fa2dfe219dda68c08766a321520b802
 
 **Reproduction summary:**
-[1–2 sentences: How did you reproduce the issue? What did you observe?]
 Before reprodicing bugs, I analyzed the code in `skill_extractor.py` that detects JavaScript/TypeScript.
 
 ```python
@@ -64,7 +63,7 @@ Before reprodicing bugs, I analyzed the code in `skill_extractor.py` that detect
         if "package.json" in text_lower:
             js_evidence.append("package.json found")
 ```
-In the above code that `if re.search(r"\b(import|require)\s+", text):` the only code-level check that can trigger JavaScript detection. Therefore, any pattern that is not deteceted by the regex `"\b(import|require)\s+` will not be counted as JavaScript. The following section shows 4 cases with some edge cases in which JavaScript is not detected.
+In the above code, is if `re.search(r"\b(import|require)\s+", text):` the only code-level check that can trigger JavaScript detection? Therefore, any pattern that is not detected by the regex `\b(import|require)\s+` will not be counted as JavaScript. The following section shows four cases --with some edge cases-- in which JavaScript is not detected
 
 
 **Bug Reproduction Script:**
@@ -133,6 +132,7 @@ for index, test in enumerate(test_cases, start=1):
     print("-" * 50)
 
 ```
+The following section shows the plan to fix the issue by detecting JavaScript/TypeScript for the optimal possible solution.
 
 **PLAN.md link:** [link to PLAN.md in your fork]
 

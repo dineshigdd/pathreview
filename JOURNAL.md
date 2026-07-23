@@ -63,7 +63,7 @@ Before reprodicing bugs, I analyzed the code in `skill_extractor.py` that detect
         if "package.json" in text_lower:
             js_evidence.append("package.json found")
 ```
-In the above code, is if `re.search(r"\b(import|require)\s+", text):` the only code-level check that can trigger JavaScript detection? Therefore, any pattern that is not detected by the regex `\b(import|require)\s+` will not be counted as JavaScript. The following section shows four cases --with some edge cases-- in which JavaScript is not detected
+In the above code, is `if re.search(r"\b(import|require)\s+", text):` the only code-level check that can trigger JavaScript detection? Therefore, any pattern that is not detected by the regex `\b(import|require)\s+` will not be counted as JavaScript. The following section shows four cases --with some edge cases-- in which JavaScript is not detected.
 
 
 **Bug Reproduction Script:**

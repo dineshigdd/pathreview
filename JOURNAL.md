@@ -51,7 +51,7 @@ Therefore, with the above-mentioned reasoning, I decided to choose `issue #148` 
 **Reproduction commit link:** https://github.com/dineshigdd/pathreview/commit/d1bb46fb9fa2dfe219dda68c08766a321520b802
 
 **Reproduction summary:**
-Before reprodicing bugs, I analyzed the code in `skill_extractor.py` that detects JavaScript/TypeScript.
+Before reprodicing bugs, I analyzed the `extract_skills()` in `skill_extractor.py` that detects JavaScript/TypeScript.
 
 ```python
  if ".js" in str(filename or "").lower():
@@ -132,6 +132,75 @@ for index, test in enumerate(test_cases, start=1):
     print("-" * 50)
 
 ```
+
+The `issue #148` also states that the `extract_skills()` function fails the test_devops_tool_detection() test case, which includes keywords for setting up `Docker` and `Docker Compose`.
+I have reproduced this bug as follows:
+ 
+```python
+from ingestion.parsers.skill_extractor import SkillExtractor
+
+docker_false_negative_cases = [
+    {
+        "name": "Dockerfile",
+        "snippet": """
+FROM python:3.9
+RUN pip install requirements.txt
+EXPOSE 8000
+""",
+        "expected_bug": (
+            "Should detect Docker from Dockerfile directives "
+            "(FROM, RUN, EXPOSE) but does not because "
+            "the word 'docker' never appears."
+        ),
+    },
+    {
+        "name": "Docker Compose",
+        "snippet": """
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+""",
+        "expected_bug": (
+            "Should detect Docker from docker-compose syntax "
+            "(services, build, ports) but does not because "
+            "the word 'docker' never appears."
+        ),
+    },
+]
+
+e = SkillExtractor()
+
+print("=== Running Docker False Negative Reproduction Suite ===\n")
+
+for index, test in enumerate(docker_false_negative_cases, start=1):
+    skills_dict = {}
+    e._detect_tools(test["snippet"], skills_dict)
+
+    print(f"Test Case {index}: {test['name']}")
+    print(f"Detected Skills: {list(skills_dict.keys())}")
+    print(f"Expected Bug: {test['expected_bug']}")
+    print("-" * 60)
+
+```
+
+*Output*
+
+```bash
+=== Running Docker False Negative Reproduction Suite ===
+
+Test Case 1: Dockerfile
+Detected Skills: []
+Expected Bug: Should detect Docker from Dockerfile directives (FROM, RUN, EXPOSE) but does not because the word 'docker' never appears.
+------------------------------------------------------------
+Test Case 2: Docker Compose
+Detected Skills: []
+Expected Bug: Should detect Docker from docker-compose syntax (services, build, ports) but does not because the word 'docker' never appears.
+
+```
+
 The following section shows the plan to fix the issue by detecting JavaScript/TypeScript for the optimal possible solution.
 
 **PLAN.md link:** [link to PLAN.md in your fork]

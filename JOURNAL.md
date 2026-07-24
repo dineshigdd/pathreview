@@ -48,8 +48,9 @@ Therefore, with the above-mentioned reasoning, I decided to choose `issue #148` 
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** https://github.com/dineshigdd/pathreview/commit/d1bb46fb9fa2dfe219dda68c08766a321520b802
-
+**Reproduction commit links:** 
+- https://github.com/dineshigdd/pathreview/commit/d1bb46fb9fa2dfe219dda68c08766a321520b802
+- https://github.com/dineshigdd/pathreview/commit/0518faa6cb423a0b71275b076e679baa46c1a8f8
 **Reproduction summary:**
 Before reprodicing bugs, I analyzed the `extract_skills()` in `skill_extractor.py` that detects JavaScript/TypeScript.
 

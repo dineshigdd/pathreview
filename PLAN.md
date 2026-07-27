@@ -6,31 +6,31 @@
 ### Understand
 This issue can be divided into two parts,but the root cause is similar
 
-1. Not detecting JavaScript/TypeScript
-*root cause:*  
-The following code in `_detect_languages()` function in `SkillExtractor` class detects `JavaScript/TypeScript`
-```python
-if ".js" in str(filename or "").lower():
-            js_evidence.append("JavaScript file extension (.js)")
-        if ".ts" in str(filename or "").lower():
-            js_evidence.append("TypeScript file extension (.ts)")
-        if re.search(r"\b(import|require)\s+", text):
-            js_evidence.append("CommonJS or ES6 imports")
-        if "package.json" in text_lower:
-            js_evidence.append("package.json found")
-```
-The root cause of this bug is that the regular expression `r"\b(import|require)\s"` only detects `JavaScript/TypeScript` code containing the `import` or `require` keyword followed by one or more whitespace characters. Therefore, it will detect, for example, `import React from 'react';` or `import { useState } from 'react';`, but not `const fs = require('fs');`. Additionally, it can produce false positives because `import` matches Python statements such as `import os` or `import sys`. This regular expression does not detect other keywords in `JS_TS_KEYWORDS`: `export`, `const`, `let`, `var`, `function`, `async`, `await`, and `class`. Another concern that could complicate detecting JavaScript/TypeScript is that the `JS_TS_KEYWORDS` set includes overlapping keywords (`import`, `class`, `async`, `await`) that are also present in the `PYTHON_KEYWORDS` set.
+**1. Not detecting JavaScript/TypeScript**  
+    **Root cause:**  
+    The following code in `_detect_languages()` function in `SkillExtractor` class detects `JavaScript/TypeScript`
+    ```python
+    if ".js" in str(filename or "").lower():
+                js_evidence.append("JavaScript file extension (.js)")
+            if ".ts" in str(filename or "").lower():
+                js_evidence.append("TypeScript file extension (.ts)")
+            if re.search(r"\b(import|require)\s+", text):
+                js_evidence.append("CommonJS or ES6 imports")
+            if "package.json" in text_lower:
+                js_evidence.append("package.json found")
+    ```
+    The root cause of this bug is that the regular expression `r"\b(import|require)\s"` only detects `JavaScript/TypeScript` code containing the `import` or `require` keyword followed by one or more whitespace characters. Therefore, it will detect, for example, `import React from 'react';` or `import { useState } from 'react';`, but not `const fs = require('fs');`. Additionally, it can produce false positives because `import` matches Python statements such as `import os` or `import sys`. This regular expression does not detect other keywords in `JS_TS_KEYWORDS`: `export`, `const`, `let`, `var`, `function`, `async`, `await`, and `class`. Another concern that could complicate detecting JavaScript/TypeScript is that the `JS_TS_KEYWORDS` set includes overlapping keywords (`import`, `class`, `async`, `await`) that are also present in the `PYTHON_KEYWORDS` set.
 
 
-2. Not detecting devops tools such as docker and docker compose
-*root cause:*  
-The root cause for not detecting `docker` or `docker compose` is that the `_detect_tools()` function detects DevOps tools by matching keywords in the `TOOLS` set. As issue [#148](https://github.com/ascherj/pathreview/issues/148) states, `test_devops_tool_detection` and `test_docker_compose_detection` fail. The reason for this is because these test cases do not contain the keyword `docker` (which is used in the `TOOLS` set) in the `text` variable. The following code, `detect_tools()`, is responsible for this keyword matching.
+**2. Not detecting devops tools such as docker and docker compose**   
+    **Root cause:**     
+    The root cause for not detecting `docker` or `docker compose` is that the `_detect_tools()` function detects DevOps tools by matching keywords in the `TOOLS` set. As issue [#148](https://github.com/ascherj/pathreview/issues/148) states, `test_devops_tool_detection` and `test_docker_compose_detection` fail. The reason for this is because these test cases do not contain the keyword `docker` (which is used in the `TOOLS` set) in the `text` variable. The following code, `detect_tools()`, is responsible for this keyword matching.
 
-```python
-for tool, confidence in self.TOOLS.items():
-            if tool in text_lower:
-                display_name = tool.upper() if tool in ["ci/cd"] else tool.title()
-```
+    ```python
+    for tool, confidence in self.TOOLS.items():
+                if tool in text_lower:
+                    display_name = tool.upper() if tool in ["ci/cd"] else tool.title()
+    ```
 
 ### Map
 Files I expect to touch:

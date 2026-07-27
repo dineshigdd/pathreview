@@ -68,7 +68,9 @@ In the above code, is `if re.search(r"\b(import|require)\s+", text):` the only c
 
 
 **Bug Reproduction Script:**
-```python
+```bash
+python3 <<'PY'
+
 from ingestion.parsers.skill_extractor import SkillExtractor
 
 # Comprehensive Bug Reproduction Suite for JavaScript/TypeScript Detection
@@ -132,12 +134,15 @@ for index, test in enumerate(test_cases, start=1):
     print(f"Detected Skills: {skill_names}")
     print("-" * 50)
 
+PY
 ```
 
 The `issue #148` also states that the `extract_skills()` function fails the test_devops_tool_detection() test case, which includes keywords for setting up `Docker` and `Docker Compose`.
 I have reproduced this bug as follows:
  
-```python
+```bash
+python3 <<'PY'
+
 from ingestion.parsers.skill_extractor import SkillExtractor
 
 docker_false_negative_cases = [
@@ -185,6 +190,8 @@ for index, test in enumerate(docker_false_negative_cases, start=1):
     print(f"Expected Bug: {test['expected_bug']}")
     print("-" * 60)
 
+PY
+
 ```
 
 *Output*
@@ -204,9 +211,8 @@ Expected Bug: Should detect Docker from docker-compose syntax (services, build, 
 
 The following section shows the plan to fix the issue by detecting JavaScript/TypeScript for the optimal possible solution.
 
-**PLAN.md link:** [link to PLAN.md in your fork]
+**PLAN.md link:** [My plan to fix issue #148](./PLAN.md)
 
-**Walkthrough video (recommended):** [link to your Loom video, ≤2 min — recommended, not graded]
+**Walkthrough video (recommended):** (Issue #148 : bug reproduction and planning)[https://www.loom.com/share/7b5502a57ead43c2b4d9db79e6441d73]
 
-**Blockers or open questions:**
-[Anything you're still uncertain about going into Week 9, or leave blank]
+**Blockers or open questions:** --

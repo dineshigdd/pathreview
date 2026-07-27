@@ -50,7 +50,8 @@ Therefore, with the above-mentioned reasoning, I decided to choose `issue #148` 
 
 **Reproduction commit links:** 
 - https://github.com/dineshigdd/pathreview/commit/d1bb46fb9fa2dfe219dda68c08766a321520b802
-- https://github.com/dineshigdd/pathreview/commit/0518faa6cb423a0b71275b076e679baa46c1a8f8
+- https://github.com/dineshigdd/pathreview/commit/0518faa6cb423a0b71275b076e679baa46c1a8f8  
+
 **Reproduction summary:**
 Before reprodicing bugs, I analyzed the `extract_skills()` in `skill_extractor.py` that detects JavaScript/TypeScript.
 
@@ -135,7 +136,52 @@ for index, test in enumerate(test_cases, start=1):
     print("-" * 50)
 
 PY
-```
+```  
+
+*Output*  
+
+```bash
+=== Running Skill Extractor Bug Reproduction Suite ===
+
+Test Case 1: Standard ES6 Modern Syntax (No extension, no import/require)
+Code Snippet:
+const calculateTotal = (items) => {
+            let subtotal = 0;
+            var taxRate = 0.05;
+            return subtotal * taxRate;
+        };
+Detected Skills: []
+--------------------------------------------------
+Test Case 2: Traditional Function Declaration with Console Logging
+Code Snippet:
+function displayWelcomeMessage(username) {
+            console.log("Welcome back, " + username);
+        }
+Detected Skills: []
+--------------------------------------------------
+Test Case 3: ES6 Class Definition without Module Imports
+Code Snippet:
+class ShoppingCart {
+            constructor() {
+                this.items = [];
+            }
+            addItem(item) {
+                this.items.push(item);
+            }
+        }
+Detected Skills: []
+--------------------------------------------------
+Test Case 4: Asynchronous Function Using Promise/Fetch Patterns
+Code Snippet:
+async function fetchData(url) {
+            let response = await fetch(url);
+            let data = await response.json();
+            return data;
+        }
+Detected Skills: []
+--------------------------------------------------
+
+```   
 
 The `issue #148` also states that the `extract_skills()` function fails the test_devops_tool_detection() test case, which includes keywords for setting up `Docker` and `Docker Compose`.
 I have reproduced this bug as follows:
@@ -213,6 +259,6 @@ The following section shows the plan to fix the issue by detecting JavaScript/Ty
 
 **PLAN.md link:** [My plan to fix issue #148](./PLAN.md)
 
-**Walkthrough video (recommended):** (Issue #148 : bug reproduction and planning)[https://www.loom.com/share/7b5502a57ead43c2b4d9db79e6441d73]
+**Walkthrough video (recommended):** [Issue #148 : bug reproduction and planning](https://www.loom.com/share/7b5502a57ead43c2b4d9db79e6441d73)
 
 **Blockers or open questions:** --

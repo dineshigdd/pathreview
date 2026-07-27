@@ -33,7 +33,7 @@ This issue can be divided into two parts,but the root cause is similar
     ```
 
 ### Map
-Files I expect to touch:
+**Files I expect to touch:**
 - `ingestion/parsers/skill_extractor.py` - conditional statement `if re.search(r"\b(import|require)\s+", text)` , which attempt to detecgt JavaScript/TypeScript text using keywords, of `_detect_languages()` function. I will modify this regular expression to match more complex `JavaScript/TypeScript` code.
 
 - I will add more keywords to `JS_TS_KEYWORDS` set so that logic for detecting `python` scripts will not connfuse `JavaScript/TypeScript` code
@@ -80,7 +80,7 @@ Files I expect to touch:
 - `_detect_languages(text: str, filename: Optional[str]) skills_dict: dict ) -> None:`
 - `_detect_tools(text, detected_skills)`
 
-**Existing happy path:**
+**Existing happy path:**  
 *Inputs*
 - `text`: String variable that holds JavaScript, TypeScript, Docker, and Docker Compose texts.
 - `filename`: String variable  An optional variable that contains the filenames of JavaScript or TypeScript files with the extension `.js` or `.ts`.

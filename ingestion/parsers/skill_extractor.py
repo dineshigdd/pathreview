@@ -1,11 +1,11 @@
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class SkillDetection:
     """Result of detecting a skill."""
+
     name: str
     category: str
     confidence: float
@@ -39,6 +39,50 @@ class SkillExtractor:
         "await",
         "class",
     }
+
+    # Each JS/TS keyword paired with the syntactic context that makes it a
+    # reliable signal. Keywords shared with Python (import/class/async/await)
+    # use JS-only framing, and words that also occur in plain English
+    # ("let"/"function"/"require") only match inside real code, so neither
+    # Python nor prose false-positives. Keys mirror JS_TS_KEYWORDS.
+    JS_TS_KEYWORD_PATTERNS = {
+        # ES6 `import X from '...'` (Python is `from x import y`, never
+        # `import ... from`) or side-effect `import './x'` / `import '@scope/x'`.
+        # The side-effect form is restricted to relative/scoped specifiers so
+        # Go's `import "fmt"` / `import "net/http"` does not collide.
+        "import": r"\bimport\b[^\n;]*\bfrom\s+['\"]|\bimport\s+['\"](?:\.{1,2}/|@[\w.-]+/)",
+        "export": (
+            r"\bexport\s+(?:default|const|let|var|function|class"
+            r"|async|type|interface|enum|\{|\*)"
+        ),
+        "require": r"\brequire\s*\(\s*['\"]",
+        "const": r"\bconst\s+[\w$]+\s*[:=]",
+        "let": r"\blet\s+[\w$]+\s*[:=]",
+        "var": r"\bvar\s+[\w$]+\s*[:=]",
+        # function definition, incl. anonymous / generator, requires a body brace
+        "function": r"\bfunction\b\s*\*?\s*[\w$]*\s*\([^)]*\)\s*\{",
+        # `async function` / `async () =>` / `async x =>` (Python is `async def`).
+        "async": r"\basync\s+function\b|\basync\s*\([^)]*\)\s*=>|\basync\s+[\w$]+\s*=>",
+        # `const/let/var x = await ...` — JS-only because of the declaration.
+        "await": r"\b(?:const|let|var)\s+[\w$]+\s*=\s*await\b",
+        # JS class: `class X extends` or `class X {` (Python uses `class X:`).
+        "class": r"\bclass\s+[\w$]+\s+extends\b|\bclass\s+[\w$]+\s*\{",
+    }
+
+    # TypeScript-only syntax. Primitive type names are the TS spellings
+    # (string/number/boolean), distinct from Python's (str/int/bool), so
+    # typed Python code does not match here.
+    TS_SYNTAX_PATTERNS = (
+        r"\binterface\s+[\w$]+\s*\{",  # interface declarations
+        r"\btype\s+[\w$]+\s*=",  # type aliases
+        r"\benum\s+[\w$]+\s*\{",  # enums
+        # type annotation, anchored so prose like "status: number of items"
+        # is not treated as a `: number` annotation.
+        r":\s*(?:string|number|boolean|any|void|unknown|never)\s*(?:[;,)\]|&=>]|$)",
+    )
+
+    # Arrow functions are a strong standalone JS/TS signal.
+    JS_ARROW_PATTERN = r"(?:\([^)]*\)|[\w$]+)\s*=>"
 
     REACT_INDICATORS = {
         "import React",
@@ -105,7 +149,7 @@ class SkillExtractor:
         "ansible": 0.85,
     }
 
-    def extract_skills(self, text: str, filename: Optional[str] = None) -> list[SkillDetection]:
+    def extract_skills(self, text: str, filename: str | None = None) -> list[SkillDetection]:
         """
         Extract skills from source code or documentation text.
 
@@ -116,7 +160,7 @@ class SkillExtractor:
         Returns:
             List of detected skills with confidence scores
         """
-        detected_skills = {}
+        detected_skills: dict[str, SkillDetection] = {}
 
         # Detect languages first
         self._detect_languages(text, filename, detected_skills)
@@ -143,7 +187,7 @@ class SkillExtractor:
     def _detect_languages(
         self,
         text: str,
-        filename: Optional[str],
+        filename: str | None,
         skills_dict: dict,
     ) -> None:
         """Detect programming languages."""
@@ -176,14 +220,27 @@ class SkillExtractor:
             js_evidence.append("JavaScript file extension (.js)")
         if ".ts" in str(filename or "").lower():
             js_evidence.append("TypeScript file extension (.ts)")
-        if re.search(r"\b(import|require)\s+", text):
-            js_evidence.append("CommonJS or ES6 imports")
+        matched_keywords = [
+            keyword
+            for keyword, pattern in self.JS_TS_KEYWORD_PATTERNS.items()
+            if re.search(pattern, text)
+        ]
+        if matched_keywords:
+            js_evidence.append("JS/TS keywords (" + ", ".join(sorted(matched_keywords)) + ")")
+        if re.search(self.JS_ARROW_PATTERN, text):
+            js_evidence.append("Arrow function syntax")
+
+        ts_syntax = any(re.search(pattern, text) for pattern in self.TS_SYNTAX_PATTERNS)
+        if ts_syntax:
+            js_evidence.append("TypeScript-specific syntax")
+
         if "package.json" in text_lower:
             js_evidence.append("package.json found")
 
         if js_evidence:
             confidence = min(0.95, 0.6 + len(js_evidence) * 0.1)
-            lang = "TypeScript" if ".ts" in str(filename or "").lower() else "JavaScript"
+            is_typescript = ".ts" in str(filename or "").lower() or ts_syntax
+            lang = "TypeScript" if is_typescript else "JavaScript"
             skills_dict[lang] = SkillDetection(
                 name=lang,
                 category="Language",

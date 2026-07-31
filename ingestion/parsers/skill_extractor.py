@@ -149,6 +149,24 @@ class SkillExtractor:
         "ansible": 0.85,
     }
 
+    # Dockerfile instructions, matched uppercase at the start of a line so
+    # Python's lowercase `from ... import` and prose do not collide.
+    DOCKERFILE_INSTRUCTION_RE = re.compile(
+        r"^\s*(FROM|RUN|CMD|COPY|ADD|EXPOSE|ENV|ENTRYPOINT|WORKDIR|VOLUME"
+        r"|LABEL|ARG|USER|HEALTHCHECK|ONBUILD|STOPSIGNAL|SHELL|MAINTAINER)\b",
+        re.MULTILINE,
+    )
+    # Every Dockerfile begins with a `FROM <image>` instruction.
+    DOCKERFILE_FROM_RE = re.compile(r"^\s*FROM\s+\S+", re.MULTILINE)
+    # docker-compose: a top-level `services:` mapping...
+    COMPOSE_SERVICES_RE = re.compile(r"^\s*services:\s*(?:#.*)?$", re.MULTILINE)
+    # ...plus at least one service-level key beneath it.
+    COMPOSE_SERVICE_KEY_RE = re.compile(
+        r"^\s*(build|image|ports|volumes|container_name|depends_on|networks"
+        r"|environment|command|expose|restart):",
+        re.MULTILINE,
+    )
+
     def extract_skills(self, text: str, filename: str | None = None) -> list[SkillDetection]:
         """
         Extract skills from source code or documentation text.
@@ -321,6 +339,10 @@ class SkillExtractor:
         """Detect tools and DevOps technologies."""
         text_lower = text.lower()
 
+        # Structural Docker detection (Dockerfile / compose) runs first so its
+        # richer evidence is not overwritten by the plain keyword scan below.
+        self._detect_docker(text, skills_dict)
+
         for tool, confidence in self.TOOLS.items():
             if tool in text_lower:
                 display_name = tool.upper() if tool in ["ci/cd"] else tool.title()
@@ -331,3 +353,47 @@ class SkillExtractor:
                         confidence=confidence,
                         evidence=[f"Found '{tool}' reference in content"],
                     )
+
+    def _detect_docker(self, text: str, skills_dict: dict) -> None:
+        """Detect Docker and Docker Compose from Dockerfile / compose syntax.
+
+        Recognises Dockerfiles even when the literal word "docker" is absent
+        (a `FROM` instruction plus at least one other instruction), and
+        docker-compose files (a top-level ``services:`` mapping plus a
+        service-level key such as ``build:`` or ``image:``).
+        """
+        # Dockerfile: a real FROM plus at least two distinct instruction types.
+        instructions = self.DOCKERFILE_INSTRUCTION_RE.findall(text)
+        if self.DOCKERFILE_FROM_RE.search(text) and len(set(instructions)) >= 2:
+            found = ", ".join(sorted(set(instructions)))
+            skills_dict.setdefault(
+                "Docker",
+                SkillDetection(
+                    name="Docker",
+                    category="Tool",
+                    confidence=0.95,
+                    evidence=[f"Dockerfile instructions ({found})"],
+                ),
+            )
+
+        # Docker Compose: top-level services mapping plus a service-level key.
+        if self.COMPOSE_SERVICES_RE.search(text) and self.COMPOSE_SERVICE_KEY_RE.search(text):
+            skills_dict.setdefault(
+                "Docker Compose",
+                SkillDetection(
+                    name="Docker Compose",
+                    category="Tool",
+                    confidence=0.95,
+                    evidence=["docker-compose services definition"],
+                ),
+            )
+            # A compose file implies Docker itself.
+            skills_dict.setdefault(
+                "Docker",
+                SkillDetection(
+                    name="Docker",
+                    category="Tool",
+                    confidence=0.90,
+                    evidence=["docker-compose configuration"],
+                ),
+            )

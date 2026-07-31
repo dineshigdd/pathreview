@@ -197,6 +197,153 @@ class TestSkillExtractor:
         skill_names = [s.name for s in result]
         assert any("docker" in s.lower() for s in skill_names)
 
+    # --- PLAN.md lines 66-71: Dockerfile & Compose positive variants ---
+
+    def test_dockerfile_copy_cmd_detection(self, extractor):
+        """Positive: a Dockerfile using COPY and CMD is detected as Docker."""
+        text = """
+        FROM node:18-alpine
+        COPY . /app
+        CMD ["node", "server.js"]
+        """
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert any("docker" in s.lower() for s in skill_names)
+
+    def test_multistage_dockerfile_detection(self, extractor):
+        """Positive: a multi-stage Dockerfile is detected as Docker."""
+        text = """
+        FROM golang:1.21 AS builder
+        WORKDIR /src
+        COPY . .
+        RUN go build -o app
+
+        FROM alpine:latest
+        COPY --from=builder /src/app /usr/local/bin/app
+        CMD ["app"]
+        """
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert any("docker" in s.lower() for s in skill_names)
+
+    def test_compose_services_image_detection(self, extractor):
+        """Positive: a compose file using services + image is detected."""
+        text = """
+        version: "3.9"
+        services:
+          db:
+            image: postgres:15
+            environment:
+              POSTGRES_PASSWORD: secret
+        """
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert any("docker" in s.lower() for s in skill_names)
+
+    def test_compose_volumes_detection(self, extractor):
+        """Positive: a compose file declaring volumes is detected."""
+        text = """
+        services:
+          cache:
+            image: redis:7
+            volumes:
+              - cache-data:/data
+
+        volumes:
+          cache-data:
+        """
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert any("docker" in s.lower() for s in skill_names)
+
+    # --- PLAN.md lines 72-73: Negative cases ---
+
+    def test_non_docker_yaml_not_detected(self, extractor):
+        """Negative: generic YAML with no services/Dockerfile is not Docker."""
+        text = """
+        name: my-app
+        version: 1.0.0
+        settings:
+          debug: true
+          timeout: 30
+        database:
+          host: localhost
+          port: 5432
+        """
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert not any("docker" in s.lower() for s in skill_names)
+
+    def test_pip_install_alone_not_detected_as_docker(self, extractor):
+        """Negative: a bare pip install line is not misdetected as Docker."""
+        text = "pip install -r requirements.txt"
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert not any("docker" in s.lower() for s in skill_names)
+
+    # --- PLAN.md line 74: Malformed configs & size extremes ---
+
+    def test_partial_docker_config_does_not_crash(self, extractor):
+        """Malformed/small: incomplete configs return a list without raising."""
+        for snippet in ("FROM", "services:", "version: '3'\nservices:", "RUN echo hi"):
+            result = extractor.extract_skills(snippet)
+            assert isinstance(result, list)
+
+    def test_docker_detected_in_large_multiblock_text(self, extractor):
+        """Size extreme: a Dockerfile embedded in large text is still detected."""
+        filler = "lorem ipsum dolor sit amet\n" * 500
+        dockerfile = """
+        FROM python:3.11-slim
+        WORKDIR /app
+        COPY requirements.txt .
+        RUN pip install -r requirements.txt
+        EXPOSE 8080
+        CMD ["python", "app.py"]
+        """
+        text = filler + dockerfile + filler
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert any("docker" in s.lower() for s in skill_names)
+
+    # --- PLAN.md line 75: Missing, empty, or neutral filenames ---
+
+    def test_docker_detected_regardless_of_filename(self, extractor):
+        """Filename-agnostic: Dockerfile body detects Docker for any filename."""
+        text = """
+        FROM ubuntu:22.04
+        RUN apt-get update
+        CMD ["bash"]
+        """
+        for filename in (None, "", "notes.txt"):
+            result = extractor.extract_skills(text, filename=filename)
+            skill_names = [s.name for s in result]
+            assert any(
+                "docker" in s.lower() for s in skill_names
+            ), f"filename={filename!r} gave {skill_names}"
+
+    # --- PLAN.md line 76: Contextual keyword collisions ---
+
+    def test_docker_keywords_in_shell_script_not_detected(self, extractor):
+        """Collision: lowercase from/copy/run in a shell script is not Docker."""
+        text = """
+        #!/bin/sh
+        # Deployment script: copy build artifacts from the dist folder
+        build() {
+            echo "running build and copying files from dist"
+        }
+        """
+        result = extractor.extract_skills(text)
+
+        skill_names = [s.name for s in result]
+        assert not any("docker" in s.lower() for s in skill_names)
+
     def test_aws_gcp_azure_detection(self, extractor):
         """Test cloud platform detection."""
         text = """

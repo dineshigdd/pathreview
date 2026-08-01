@@ -322,6 +322,6 @@ The tests added for Docker and Docker compose detection:
     | `test_docker_keywords_in_shell_script_not_detected` | Ignores lowercase `from/copy/run` keywords inside a shell script |
        
 
-**Self-review confirmation:** [ ] make check passes  [ ] make test-unit passes
+**Self-review confirmation:** [x] make check passes  [x] make test-unit passes
 
-**Draft PR feedback received from:** [name or Slack handle, or "none"]
+**Draft PR feedback received from:** none

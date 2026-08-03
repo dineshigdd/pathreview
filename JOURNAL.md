@@ -283,7 +283,7 @@ When committing changes to the test files, `mypy` flagged missing type annotatio
 
 ### Check-in 2 (end of week)
 
-**PR link:** [link to your submitted pull request]
+**PR link:** https://github.com/ascherj/pathreview/pull/647
 
 **Branch:** `fix/148-skill-extractor-fails`
 

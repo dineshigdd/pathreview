@@ -325,3 +325,65 @@ The tests added for Docker and Docker compose detection:
 **Self-review confirmation:** [x] make check passes  [x] make test-unit passes
 
 **Draft PR feedback received from:** none
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes  [x] No — still awaiting review
+
+**Summary of feedback:**  No review came in
+
+**How you responded:**
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+The most difficult part of the process was setting up the local development environment. The reason for this was partly because I did not read the correct documentation related to setup and pre-existing conditions on my local machine.
+
+The biggest mistake I made in setting up the local development environment was not reading the correct documents. I initially started setting up by following the "What to Do This Week" section in the Week 7 `Show (Project) section` and using AI tools such as `Gemini`, and completely missed the `SETUP.md`. Consequently, it took me a long time to set up the local environment, and I had a lot of compatibility issues because I did not install Docker. Eventually, I found out my mistake and followed the `SETUP.md`. From that point onward, setting up became a smooth process.
+
+I was doing all the project work in Windows and used Git Bash as the terminal. This works well for a small codebase. However, this project had a large and complex codebase. With some support from AI, I decided to install the project in Linux (WSL) as it is a useful experience for future projects as well. As a result, I had to install some of the prerequisites needed for this project, such as Docker and Docker Compose, and update other requirements such as Node and Python.
+
+Other than setting up the local environment, I also found it somewhat challenging initially to understand the architecture (project structure) of the codebase. But with the resources available in the Student Hub, I overcame this challenge by first trying to gain a high-level understanding of the project structure and then navigating from the front end to the back end in detail for the specific part of the project related to the `issue #148` I tried to address.
+
+**What did you learn about working in a large codebase?**
+I think building your own project is surprisingly easier than understanding someone else's codebase. When building your own project, you know the ins and outs of the project from the beginning and you are gradually aware of how a simple project grows into a large, complex project layer by layer.
+
+On the other hand, contributing to someone else's codebase is synonymous with dropping a traveler into a thick jungle with a compass and a map. A traveler has to use their knowledge of reading maps and compasses to navigate the thick jungle. So as a developer, with knowledge in software engineering and with the assistance of documents such as `README.md`, `CONTRIBUTING.md`, and `SETUP.md`, a developer has to find their way to the section of the codebase to address the issue they are concerned with, rather than getting lost in the details and depth of the codebase and researching unnecessary sections that are not related to the issue.
+
+**How did AI tools help — and where did they fall short?**
+*How I use AI tools*  
+- Implementation phase  
+    AI tools were most useful in the implementation stage when I expanded the functionality of `_detect_languages()` for JavaScript and TypeScript detection and when I added the new function `_detect_docker` for Docker and Docker Compose detection in `skill_extractor.py`. The code generated based on the `PLAN.md` was initially not as I expected and did not detect JavaScript or TypeScript. Therefore, I revised my prompt and instructed the AI to use all the keywords in `JS_TS_KEYWORDS` and regular expressions to cover the test cases that I had planned.
+
+- Planning phase  
+    While I primarily came up with the steps myself in the planning phase, I had some assistance from AI in planning and developing test cases in `test_skill_extractor.py` . In bug reproduction, I used AI mainly to come up with the Python code after analyzing the `issue #148` thoroughly and informing the AI of the type of bug reproduction I expected.
+
+*Beyond AI*  
+- Understanding the codebase and issue  
+    While AI is immensely helpful, in understanding the codebase, issue, and planning, I used AI minimally. I found through my experience in this course that AI produces useful solutions when the prompt is more specific. Vague prompts produce broad solutions that are not very useful. Therefore, I tried to have a good understanding of the codebase and especially about the issue I tried to address without using AI, and then used AI only for validating my understanding.
+
+- Creativity in the planning phase  
+    When developing `Map` and `Plan` to create a solution for this issue, I came up with the high-level idea. As I had an in-depth understanding of the issue, I was able to come up with a fairly reasonable solution. 
+
+    When identifying limitations, unknowns, and edge cases, I came up with the high-level idea. However, I did use AI partially in refining my ideas.
+
+- Reviewing the AI code  
+    I manually reviewed and tested all the code generated by AI. This helped me instruct the AI to refine some of the code it generated, as I mentioned before with the JavaScript/TypeScript logic implementation.
+
+**What would you do differently if you started over?**
+- Issue selection  
+    I chose a beginner-friendly issue(`issue #148`). While I am satisfied with my issue selection, I would probably choose an issue related to AI if I started over. The reason for this is that I could have applied the concepts I learned in previous modules to the open-source contribution.
+
+- Refining test cases  
+    I would use AI to refine my test cases more. I used AI to come up with test cases, but if I were to start this issue or any other issue over again, I would carefully review the test cases to refine them. I had overlapping test cases in this project; I would combine those and minimize redundant test cases, with or without using AI tools.
+
+- Planning and scope  
+    When planning the solution for the issue, I focused more on improving the regular expressions and did not put much effort into identifying other JavaScript- and TypeScript-related file extensions, such as `JSX` or `TSX`. Therefore, I would address these extensions if I started over.
+
+
+**What are you most proud of from this module?**
+I am proud that I used AI as a tool without blindly accepting its outcomes for the most part. I tried to understand the codebase and the issue with minimal use of AI. I think this part is critical as it provides an opportunity for real learning about the codebase and the issue to address. This understanding helped me to address the issue effectively, and I am proud of that achievement. I am confident that I can address more challenging issues later in open-source contributions.
